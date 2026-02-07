@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import "./Valentine.css";
 
 export default function Valentine() {
@@ -6,15 +6,22 @@ export default function Valentine() {
   const [showQuestion, setShowQuestion] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [dark, setDark] = useState(false);
+
   const audioRef = useRef(null);
+  const heartInterval = useRef(null);
+  const petalInterval = useRef(null);
 
   const handleOpen = () => {
+    if (opened) return;
+
     setOpened(true);
     setShowQuestion(true);
+
     if (audioRef.current) {
       audioRef.current.volume = 0.6;
-      audioRef.current.play().catch(() => console.log("Autoplay blocked"));
+      audioRef.current.play().catch(() => {});
     }
+
     startHearts();
     startPetals();
   };
@@ -32,28 +39,37 @@ export default function Valentine() {
   };
 
   const startHearts = () => {
-    setInterval(() => {
+    if (heartInterval.current) return;
+
+    heartInterval.current = setInterval(() => {
       const heart = document.createElement("div");
       heart.className = "heart";
       heart.innerText = "❤️";
       heart.style.left = Math.random() * 100 + "vw";
-      heart.style.animationDuration = 3 + Math.random() * 3 + "s";
       document.body.appendChild(heart);
       setTimeout(() => heart.remove(), 6000);
     }, 300);
   };
 
   const startPetals = () => {
-    setInterval(() => {
+    if (petalInterval.current) return;
+
+    petalInterval.current = setInterval(() => {
       const petal = document.createElement("div");
       petal.className = "petal";
       petal.innerText = "🌹";
       petal.style.left = Math.random() * 100 + "vw";
-      petal.style.animationDuration = 4 + Math.random() * 3 + "s";
       document.body.appendChild(petal);
       setTimeout(() => petal.remove(), 7000);
     }, 400);
   };
+
+  useEffect(() => {
+    return () => {
+      clearInterval(heartInterval.current);
+      clearInterval(petalInterval.current);
+    };
+  }, []);
 
   return (
     <div className={`valentine ${dark ? "dark" : ""}`}>
@@ -66,31 +82,32 @@ export default function Valentine() {
 
         <button
           className="dark-toggle"
-          onClick={() => {
-            if (!audioRef.current) return;
-            audioRef.current.paused ? audioRef.current.play() : audioRef.current.pause();
-          }}
+          onClick={() =>
+            audioRef.current?.paused
+              ? audioRef.current.play()
+              : audioRef.current.pause()
+          }
         >
           🎶 Music
         </button>
 
-        {/* Envelope */}
         <div className="envelope-container" onClick={handleOpen}>
           <div className={`envelope ${opened ? "open" : ""}`}>
             <div className="envelope-front"></div>
             <div className="envelope-back"></div>
 
             {opened && (
-              <div className="letter fade-in">
-                <p>Hey My Love 💕</p>
-                <p>I’ve been meaning to ask you something special…</p>
-                <p>Will you be my Valentine?</p>
+              <div className="letter">
+                <div className="letter-content fade-in">
+                  <p>Hey My Love 💕</p>
+                  <p>I’ve been meaning to ask you something special…</p>
+                  <p>Will you be my Valentine?</p>
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Question */}
         {showQuestion && (
           <div className="question">
             <p>Will you be my Valentine? 💖</p>
@@ -106,7 +123,6 @@ export default function Valentine() {
         )}
       </div>
 
-      {/* Popup */}
       {showPopup && (
         <div className="overlay">
           <div className="popup">
@@ -116,8 +132,7 @@ export default function Valentine() {
         </div>
       )}
 
-      {/* Music */}
-      <audio ref={audioRef} loop preload="auto">
+      <audio ref={audioRef} loop>
         <source
           src="https://cdn.pixabay.com/download/audio/2023/02/28/audio_7d4c95c5e0.mp3"
           type="audio/mpeg"
